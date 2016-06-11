@@ -10,9 +10,9 @@ body {
 background: #fcfcfa;
 color: #333;
 font-family: "PT Serif", serif;
-margin: 1em auto 4em auto;
+/*margin: 1em auto 4em auto;*/
 position: relative;
-width: 960px;
+/*width: 960px;*/
 }
  
 header,
@@ -50,7 +50,10 @@ width: 740px;
  
 footer {
 font-size: small;
-margin-top: 8em;
+/*margin-top: 8em;*/
+position:fixed;
+left:0px;
+bottom:0px;
 }
  
 header aside {
@@ -65,8 +68,9 @@ text-align: right;
  
 aside {
 font-size: small;
-right: 0;
-position: absolute;
+/*right: 0;*/
+/*position: absolute;*/
+position: fixed;
 width: 180px;
 }
  
@@ -180,3 +184,30 @@ left: 2em;
 blockquote:after {
 position: absolute;
 }
+
+
+table { 
+		width: 100%; 
+		border-collapse: collapse; 
+	}
+	/* Zebra striping */
+	tr:nth-of-type(odd) { 
+		background: #eee; 
+	}
+	th { 
+		background: #333; 
+		color: white; 
+		font-weight: bold; 
+	}
+	td, th { 
+		padding: 6px; 
+		border: 1px solid #ccc; 
+		text-align: left; 
+	}
+	td {
+			/* Behave  like a "row" */
+			border: none;
+			border-bottom: 1px solid #eee;
+			position: relative;
+			padding-left: 50%;
+		}
