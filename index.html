@@ -22,27 +22,54 @@ stroke-width: .25px;
 #circle:hover path.fade {
 display: none;
 }
+
+td, th {
+    padding: 1px 4px;
+    border: 1px black solid;
+}
  
 </style>
  
 <header>
-<aside>June 9th, 2016</aside>
+<!-- <aside>June 9th, 2016</aside>
 <p>Modified from Mike Bostock's <a href="http://bost.ocks.org/mike/uberdata/">Uber Rides by Neighborhood</a></p>
-<p>Modified from eleyine's <a href="http://bl.ocks.org/eleyine/raw/6846156/">Visa requirements in Arab countries</a></p>
+<p>Modified from eleyine's <a href="http://bl.ocks.org/eleyine/raw/6846156/">Visa requirements in Arab countries</a></p> -->
 </header>
  
 <h1>Euro 2016 Squads</h1>
  
-<aside>Mouseover to focus on flow to and from a particular league or country.</aside>
+<aside>Mouseover to focus on flow to and from a particular league or country. Click on a chord or arc to filter the table on that country<!-- </aside> -->
  
-<p>Built with <a href="http://d3js.org/">d3.js</a>.</aside>
- 
+<p>Built with <a href="http://d3js.org/">d3.js</a>.
+<p>June 9th, 2016</aside>
+
+<body>
+
+<div>
+<div style="float:left; margin-left:5px" id="area1"></div>
+
+<!-- <div style="float:left" id="area2"></div> -->
+<div style="float:left; width:150px;" id="option">
+    <input name="resetButton"
+           type="button"
+           value="Reset Table"
+           style="margin-left:20px"
+           onclick="resetTable()" />
+    <br></br>
+    <div id="area2"></div>
+</div>
+<div id="footer"></div>
+
 <script src="http://d3js.org/d3.v2.min.js?2.8.1"></script>
 <script>
+
+var	margin = {top: 30, right: 20, bottom: 30, left: 0};
+	/*width = 400 - margin.left - margin.right,
+	height = 220 - margin.top - margin.bottom;*/
  
 var width = 1000,
 height = 1000,
-outerRadius = Math.min(width, height) / 2 - 70,
+outerRadius = Math.min(width, height) / 2 - 90,
 innerRadius = outerRadius - 24;
  
 var formatPercent = d3.format(".1%");
@@ -59,7 +86,7 @@ var layout = d3.layout.chord()
 var path = d3.svg.chord()
 .radius(innerRadius);
  
-var svg = d3.select("body").append("svg")
+var svg = d3.select("#area1").append("svg")
 .attr("width", width)
 .attr("height", height)
 .append("g")
@@ -69,11 +96,32 @@ var svg = d3.select("body").append("svg")
 svg.append("circle")
 .attr("r", outerRadius);
  
+d3.csv("players.csv", function(data) {
 d3.csv("euro_teams.csv", function(cities) {
 d3.json("euro_matrix.json", function(matrix) {
+	var total_players = d3.sum(matrix, function(d) {
+		var currentVal = 0;
+		d.forEach(function(entry){
+			// console.log(entry)
+			currentVal = currentVal + entry;
+		})
+		//return d.value;
+		return currentVal
+		});
+	// console.log(total_players);
  
 // Compute the chord layout.
+// var mod_matrix = matrix.forEach(function(row){
+/*matrix.forEach(function(row){
+	var row_total = d3.sum(row) //, function(d) {
+	// row.forEach	
+	row[1] = row[1] + 1
+})*/
+
+// console.log(mod_matrix)
 layout.matrix(matrix);
+
+
  
 // Add a group per neighborhood.
 var group = svg.selectAll(".group")
@@ -81,17 +129,25 @@ var group = svg.selectAll(".group")
 .enter().append("g")
 .attr("class", "group")
 .on("mouseover", mouseover);
+
  
-/*Add a mouseover title.
+// Add a mouseover title.
 group.append("title").text(function(d, i) {
-return cities[i].name + ": " + formatPercent(d.value) + " of origins";
-});*/
+return formatPercent(d.value/total_players) + " of total players origin from the " + cities[i].name + " league";
+});
+
  
 // Add the group arc.
 var groupPath = group.append("path")
-.attr("id", function(d, i) { return "group" + i; })
+.attr("id", function(d, i) {
+	return "group" + i; })
 .attr("d", arc)
-.style("fill", function(d, i) { return cities[i].color; });
+.style("fill", function(d, i) { return cities[i].color; })
+.on('click', function(d,i){
+	row_filter = {'leagueFilter': cities[i].name, 'countryFilter':  'All'}
+	peopleTable.remove()
+	peopleTable = tabulate(data, ['Player','Club','League','Country'], row_filter);
+});
  
 // Add a text label.
 /*var groupText = group.append("text")
@@ -118,15 +174,38 @@ var groupText = group.append("text")
       .style("text-anchor", function(d) { return d.angle > Math.PI ? "end" : null; })
       .text(function(d, i) { return cities[i].name; });
  
+var div = d3.select("body").append("div")	
+    .attr("class", "tooltip")				
+    .style("opacity", 0);
 
- 
+
 // Add the chords.
 var chord = svg.selectAll(".chord")
 .data(layout.chords)
 .enter().append("path")
 .attr("class", "chord")
 .style("fill", function(d) { return cities[d.source.index].color; })
-.attr("d", path);
+.attr("d", path)
+.on('click', function(d){
+	row_filter = {'leagueFilter': cities[d.source.index].name, 'countryFilter':  cities[d.target.index].name}
+	peopleTable.remove()
+	peopleTable = tabulate(data, ['Player','Club','League','Country'], row_filter);
+});
+//.attr("xlink:href", function(d){ return "https://www.google.ie/?gws_rd=cr&ei=0zZbV6aLCIPJgAbvyoW4Cw#q="+cities[d.source.index].name + '_' + cities[d.target.index].name});
+/*.on('click', function(d){
+	var url = "https://www.google.ie/?gws_rd=cr&ei=0zZbV6aLCIPJgAbvyoW4Cw#q=";
+        url += cities[d.source.index].name + '_' + cities[d.target.index].name;
+        //$(location).attr('href', url);
+        window.location = url;
+	console.log(cities[d.source.index].name + '_' + cities[d.target.index].name )});*/
+/*.on('click', function(d){
+	div .html(
+            '<a href= "http://google.com">' + // The first <a> tag
+            "</a>" +                          // closing </a> tag
+            "<br/>"  + d.close)     
+            .style("left", (d3.event.pageX) + "px")             
+            .style("top", (d3.event.pageY - 28) + "px");
+})*/
  
 // Add an elaborate mouseover title for each chord.
  chord.append("title").text(function(d) {
@@ -146,14 +225,108 @@ return p.source.index != i
 && p.target.index != i;
 });
 }
+
+
+// The table generation function
+function tabulate(data, columns, row_filter) {
+    var table = d3.select("#area2").append("table")
+            .attr("style", "margin-left: 20px")
+            .style("border-collapse", "collapse")// <= Add this line in
+            .style("border", "2px black solid"), // <= Add this line in
+        thead = table.append("thead"),
+        tbody = table.append("tbody");
+
+    // append the header row
+    thead.append("tr")
+        .selectAll("th")
+        .data(columns)
+        .enter()
+        .append("th")
+            .text(function(column) { return column; });
+
+    // create a row for each object in the data
+    var rows = tbody.selectAll("tr")
+        .data(data)
+        .enter()
+        .append("tr")
+        .filter(function(d) {
+        	/*var row_bool = true
+        	var ans = row_filter['countryFilter'].forEach(function(entry){
+        		//console.log(entry)
+        		row_bool = row_bool & (d.Country == entry)
+        		return row_bool
+        	});
+        	return ans*/
+        	if (row_filter['countryFilter'] == 'All' & row_filter['leagueFilter'] == 'All'){
+        		return true
+        	}
+        	else if (row_filter['countryFilter'] == 'All'){
+        		return d.League ==  row_filter['leagueFilter']	| d.Country ==  row_filter['leagueFilter']
+        	}
+        	else if (row_filter['leagueFilter'] == 'All'){
+        		return d.Country == row_filter['countryFilter'] | d.League == row_filter['countryFilter']
+        	}
+        	else {
+        		return (d.Country == row_filter['countryFilter'] & d.League ==  row_filter['leagueFilter']) | (d.League == row_filter['countryFilter'] & d.Country ==  row_filter['leagueFilter'])
+        	}
+        	//return d.Country == row_filter['countryFilter'] & d.League ==  row_filter['leagueFilter']
+        });
+
+    // create a cell in each row for each column
+    var cells = rows.selectAll("td")
+        .data(function(row) {
+            return columns.map(function(column) {
+                return {column: column, value: row[column]};
+            });
+        })
+        .enter()
+        .append("td")
+        .attr("style", "font-family: Courier") // sets the font style
+            .html(function(d) { return d.value; });
+    
+    return table;
+}
+
+/*function resetTable(data){*/
+window.resetTable = function(){
+	row_filter = {'leagueFilter': 'All', 'countryFilter': 'All'}
+	peopleTable.remove()
+	peopleTable = tabulate(data, ['Player','Club','League','Country'], row_filter);
+}
+
+
+//.filter(function(d) { return d.close < 400 })
+
+// render the table
+//var peopleTable = tabulate(data, ['','0#0','Pos.','Player','Date of birth (age)','Caps','Goals','Club','Club.Country','Country']);
+var row_filter = {'leagueFilter': 'All', 'countryFilter': 'All'}
+var peopleTable = tabulate(data, ['Player','Club','League','Country'], row_filter);
+
+peopleTable.selectAll("tbody tr") 
+        .sort(function(d) {
+        		//console.log(d.Player)
+                return d3.descending(d.Player, d.League, d.Country);
+        });
+
+peopleTable.selectAll("thead th")
+        .text(function(column) {
+                return column.charAt(0).toUpperCase()+column.substr(1);
+        });
+
 });
 });
+});
+
+
  
 </script>
+
+
+</body>
  
  
 <footer>
-<aside>June 9th, 2016</aside>
-<p>Modified from Mike Bostock's <a href="http://bost.ocks.org/mike/uberdata/">Uber Rides by Neighborhood</a></p>
-<p>Modified from eleyine's <a href="http://bl.ocks.org/eleyine/raw/6846156/">Visa requirements in Arab countries</a></p>
+<aside></aside>
+<p>Modified from Mike Bostock's <a href="http://bost.ocks.org/mike/uberdata/">Uber Rides by Neighborhood</a>. 
+Data sourced from <a href='https://en.wikipedia.org/wiki/UEFA_Euro_2016_squads'>Wikipedia</a></p>
 </footer>
